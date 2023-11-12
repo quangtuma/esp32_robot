@@ -33,11 +33,10 @@ async function main() {
 
   // GET endpoint to retrieve a single book by ID
   app.get('/api/controlling/:id', async (req, res) => {
-    var para = req.params.id;
-    // const book = await controllingCollection.findOne({ servo: req.params, });
-    // if (!book) return res.status(404).json({ error: 'Book not found' });
-    // res.json(book);
-    console.log(para);
+    const book = await controllingCollection.findOne({ servo: req.params.id, });
+    if (!book) return res.status(404).json({ error: 'Book not found' });
+    res.json(book);
+    console.log(res);
   });
 
   // POST endpoint to add a new book
