@@ -2,9 +2,9 @@
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 
-const char* ssid = "Van Cai";
-const char* password = "88888888";
-const char* url = "http://192.168.1.9:3000/api/controlling";
+const char* ssid = "Phi Long";
+const char* password = "98765432";
+const char* url = "http://192.168.1.100:3000/api/controlling";
 
 HTTPClient http;
 
@@ -44,22 +44,22 @@ void loop() {
 
         char json[200];
         payload.toCharArray(json, payload.length() + 1);
-        StaticJsonDocument<1000> doc;
+        StaticJsonDocument<1024> doc;
         DeserializationError error = deserializeJson(doc, json);
 
-        // Test if parsing succeeds.
-        if (error) {
-          Serial.print(F("deserializeJson() failed: "));
-          Serial.println(error.f_str());
-          return;
-        }
+        // // Test if parsing succeeds.
+        // if (error) {
+        //   Serial.print(F("deserializeJson() failed: "));
+        //   Serial.println(error.f_str());
+        //   return;
+        // }
 
-        ServoControlling servo;
-        servo.id = doc["_id"];
-        servo.servo = doc["servo"];
-        Serial.println(servo.servo);
-        servo.description = doc["description"];
-        servo.value = doc["value"];
+        // ServoControlling servo;
+        // servo.id = doc["_id"];
+        // servo.servo = doc["servo"];
+        // Serial.println(servo.servo);
+        // servo.description = doc["description"];
+        // servo.value = doc["value"];
       }
     } else {
       Serial.printf("[HTTP] GET request failed, error: %s\n", http.errorToString(httpCode).c_str());

@@ -1,11 +1,12 @@
 const express = require('express');
+
+// import { MongomongoClient } from 'mongodb'
+const { MongoClient } = require('mongodb');
+
+
 const app = express();
 const port = 3000;
 app.use(express.json());
-
-const { MongoClient } = require('mongodb');
-// or as an es module:
-// import { MongomongoClient } from 'mongodb'
 
 // Connection URL
 const url = 'mongodb://0.0.0.0:27017';
@@ -28,15 +29,15 @@ async function main() {
   app.get('/api/controlling', async (req, res) => {
     const controlling = await controllingCollection.find({}).toArray();
     res.json(controlling);
-    console.log(res);
+    //console.log(res);
   });
 
   // GET endpoint to retrieve a single book by ID
-  app.get('/api/controlling/:id', async (req, res) => {
-    const book = await controllingCollection.findOne({ servo: req.params.id, });
+  app.get('/api/controlling/:findOne', async (req, res) => {
+    const query = { servo: req.query.servo };
+    const book = await controllingCollection.findOne(query);
     if (!book) return res.status(404).json({ error: 'Book not found' });
     res.json(book);
-    console.log(res);
   });
 
   // POST endpoint to add a new book
