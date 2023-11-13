@@ -1,12 +1,19 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
+#include <ESP32Servo.h>
 
-const char* ssid = "Phi Long";
-const char* password = "98765432";
-const char* url = "http://192.168.1.100:3000/api/controlling";
+#define SERVO_LEFT_THIGH 13
+#define SERVO_LEFT_KNEE 12
+#define SERVO_LEFT_ANKLE 14
+#define SERVO_RIGHT_THIGH 27
+#define SERVO_RIGHT_KNEE 26
+#define SERVO_RIGHT_ANKLE 25
+#define SERVO_NUMBER 6
 
-HTTPClient http;
+const char* ssid = "Cafe";
+const char* password = "phamnhuxuong";
+const char* url = "http://192.168.1.4:3000/api/controlling";
 
 struct ServoControlling
 {
@@ -16,12 +23,15 @@ struct ServoControlling
   const char* value;
 };
 
-ServoControlling ControllingArray[3];
+
+HTTPClient http;
+ServoControlling ControllingArray[SERVO_NUMBER];
+Servo ServoObjects[SERVO_NUMBER];
 
 ServoControlling getStructFromJson(String json)
 {
   char jsonChar[200];
-  json.toCharArray(jsonChar, json.length());
+  json.toCharArray(jsonChar, json.length() + 1);
   StaticJsonDocument<256> doc;
   DeserializationError error = deserializeJson(doc, jsonChar);
 
@@ -35,24 +45,51 @@ ServoControlling getStructFromJson(String json)
   }
   servo.id = doc["_id"];
   servo.servo = doc["servo"];
-  Serial.println(servo.servo);
   servo.description = doc["description"];
   servo.value = doc["value"];
 
   return servo;
 }
 
-String getOneJson(int startIndex, String jsons, int* nextIndex)
+String getOneJson(String jsons, int* startIndex)
 {
-  int lastIndex = jsons.indexOf('}', startIndex);
-  Serial.printf("lastIndex: %d\n", lastIndex);
-  nextIndex = &lastIndex;
-  Serial.printf("*nextIndex: %d\n", *nextIndex);
-  return jsons.substring(startIndex, lastIndex);
+  *startIndex = jsons.indexOf('{', *startIndex);
+  int lastIndex = jsons.indexOf('}', *startIndex) + 1;
+
+  String json = jsons.substring(*startIndex, lastIndex);
+
+  *startIndex = lastIndex;
+
+  return json;
+}
+
+void setupServos()
+{
+  ServoObjects[0].attach(SERVO_LEFT_THIGH);
+  ServoObjects[1].attach(SERVO_LEFT_KNEE);
+  ServoObjects[2].attach(SERVO_LEFT_ANKLE);
+  ServoObjects[3].attach(SERVO_RIGHT_THIGH);
+  ServoObjects[4].attach(SERVO_RIGHT_KNEE);
+  ServoObjects[5].attach(SERVO_RIGHT_ANKLE);
+}
+
+void updateServo()
+{
+  for (int index = 0; index < SERVO_NUMBER; index++)
+  {
+    int pos = strtol(ControllingArray[index].value, NULL, 10);
+    if (pos < 0 || pos > 180)
+      Serial.println("Pos is over range from 0 degree to 180 degree!");
+    else 
+      ServoObjects[index].write(pos);
+  }
 }
 
 void setup() {
   Serial.begin(115200);
+
+  setupServos();
+
   WiFi.begin(ssid, password);
 
   while (WiFi.status() != WL_CONNECTED) {
@@ -77,20 +114,23 @@ void loop() {
 
         // remove [] of response json string
         payload = payload.substring(1, payload.length() - 1);
-        Serial.println(payload);
+        //Serial.println(payload);
         
         // index of '{', indexArray of ControllingArray, nextIndex of '}' + 1
-        int index = 0;
-        int indexArray = 0;
-        int *nextIndex = 0;
-        while (index < payload.length())
+        int indexArray, startIndex = 0;
+
+        while (startIndex < payload.length())
         {
-          Serial.printf("index: %d\n", payload);
-          // String json = getOneJson(index, payload, nextIndex);
-          // Serial.printf("Json String: %s\n", json);
-          // ControllingArray[indexArray] = getStructFromJson(json);
-          // Serial.println("json: %s\n nextIndex: %d\n ControllingArray[indexArray].value: %s", json, *nextIndex,  ControllingArray[indexArray].value);
-          index = *nextIndex + 1;
+          String json = getOneJson(payload, &startIndex);
+          ControllingArray[indexArray] = getStructFromJson(json);
+
+          Serial.print("ControllingArray: ");
+          Serial.println(ControllingArray[indexArray].value);
+          Serial.println(typeid(ControllingArray[indexArray].value).name);
+          //int pos = ControllingArray[indexArray].value;
+          //Serial.print("Pos: ");
+          //Serial.println(pos);
+          
           indexArray++;
         }
       }
