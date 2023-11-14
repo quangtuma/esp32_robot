@@ -1,0 +1,48 @@
+[{
+  "_id": {
+    "$oid": "654ef9eedad8b93a35f79b87"
+  },
+  "servo": "left thigh",
+  "description": "left thigh servo",
+  "value": 32
+},
+{
+  "_id": {
+    "$oid": "6552db7b6401618c896cc9f5"
+  },
+  "servo": "left knee",
+  "description": "left knee servo",
+  "value": 31
+},
+{
+  "_id": {
+    "$oid": "6552db816401618c896cc9f6"
+  },
+  "servo": "left ankle",
+  "description": "left ankle servo",
+  "value": 30
+},
+{
+  "_id": {
+    "$oid": "6552e2276401618c896cc9f7"
+  },
+  "servo": "right thigh",
+  "description": "right thigh servo",
+  "value": 29
+},
+{
+  "_id": {
+    "$oid": "6552e22e6401618c896cc9f8"
+  },
+  "servo": "right knee",
+  "description": "right knee servo",
+  "value": 28
+},
+{
+  "_id": {
+    "$oid": "6552e2366401618c896cc9f9"
+  },
+  "servo": "right ankle",
+  "description": "right ankle servo",
+  "value": 27
+}]
