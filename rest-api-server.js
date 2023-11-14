@@ -1,9 +1,8 @@
+// import libraries
 const express = require('express');
-
-// import { MongomongoClient } from 'mongodb'
 const { MongoClient } = require('mongodb');
 
-
+// Init express app with port 3000
 const app = express();
 const port = 3000;
 app.use(express.json());
@@ -18,7 +17,7 @@ const dbName = 'esp32';
 async function main() {
   // Use connect method to connect to the server
   await mongoClient.connect();
-  console.log('Connected successfully to server');
+  console.log('Connected successfully to MongoDB Server');
   const db = mongoClient.db(dbName);
   const controllingCollection = db.collection('controlling');
 
@@ -28,24 +27,24 @@ async function main() {
   // GET endpoint to retrieve all controlling
   app.get('/api/controlling', async (req, res) => {
     const controlling = await controllingCollection.find({}).toArray();
+    if (!controlling) console.log('Client request is not successfully!');
     res.json(controlling);
-    //console.log(res);
   });
 
-  // GET endpoint to retrieve a single book by ID
+  // GET endpoint to retrieve a single servo by ID
   app.get('/api/controlling/:findOne', async (req, res) => {
     const query = { servo: req.query.servo };
-    const book = await controllingCollection.findOne(query);
-    if (!book) return res.status(404).json({ error: 'Book not found' });
-    res.json(book);
+    const servo = await controllingCollection.findOne(query);
+    if (!servo) return res.status(404).json({ error: 'servo not found' });
+    res.json(servo);
   });
 
-  // POST endpoint to add a new book
+  // POST endpoint to add a new servo
   app.post('/api/controlling', async (req, res) => {
-    const newBook = req.body;
-    const result = await controllingCollection.insertOne(newBook);
-    const insertedBook = await controllingCollection.findOne({ _id: result.insertedId });
-    res.status(201).json(insertedBook);
+    const newservo = req.body;
+    const result = await controllingCollection.insertOne(newservo);
+    const insertedservo = await controllingCollection.findOne({ _id: result.insertedId });
+    res.status(201).json(insertedservo);
   });
 
   // Start the server
