@@ -16,9 +16,28 @@
 const char* ssid = "Phi Long";
 const char* password = "98765432";
 
+// Mode infor url
+String CONTROLLING_URL = "controlling";
+String MODE_URL = "mode";
+
 // URL connect to rest api server to get data from MongoDB
-const char* url = "http://192.168.1.97:3000/api/controlling";
+String URL = "http://192.168.1.97:3000/api/";
 HTTPClient http;
+
+// Struct to store MODE
+typedef struct ServoMode
+{
+  const char* id;
+  int mode;
+};
+
+enum MODE_ENUM
+{
+  AUTO = 0,
+  MANUAL
+};
+
+ServoMode MODE;
 
 // Struct to store Servo information from MongDB
 typedef struct ServoInfor
@@ -35,7 +54,28 @@ ServoInfor ServoInfors[SERVO_NUMBER];
 // Array store Servos information from Hardware
 Servo ServoObjects[SERVO_NUMBER];
 
-ServoInfor getStructFromJson(String json)
+ServoMode getModeFromJson(String json)
+{
+  char jsonChar[200];
+  json.toCharArray(jsonChar, json.length() + 1);
+  StaticJsonDocument<256> doc;
+  DeserializationError error = deserializeJson(doc, jsonChar);
+
+  ServoMode mode;
+  // Test if parsing succeeds.
+  if (error) {
+    Serial.print(F("deserializeJson() failed: "));
+    Serial.println(error.f_str());
+
+    return mode;
+  }
+  mode.id = doc["_id"];
+  mode.mode = doc["mode"];
+
+  return mode;
+}
+
+ServoInfor getInforFromJson(String json)
 {
   char jsonChar[200];
   json.toCharArray(jsonChar, json.length() + 1);
@@ -70,6 +110,18 @@ String getOneJson(String jsons, int* startIndex)
   return json;
 }
 
+void setupWifi()
+{
+  WiFi.begin(ssid, password);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    Serial.println("Connecting to WiFi...");
+  }
+
+  Serial.println("Connected to WiFi");
+}
+
 void setupServos()
 {
   // set pin pwm
@@ -99,41 +151,42 @@ void updateServo()
 }
 
 void setup() {
+
   Serial.begin(115200);
 
   setupServos();
 
-  WiFi.begin(ssid, password);
-
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(1000);
-    Serial.println("Connecting to WiFi...");
-  }
-
-  Serial.println("Connected to WiFi");
-
-  http.begin(url); // Specify the URL
+  setupWifi();
 }
 
-void loop() {
+void httpRequest(String urlRequest)
+{
+  http.begin(URL + urlRequest); // Specify the URL
+  int httpCode = http.GET(); // Make the GET request
+  
+  if (httpCode > 0) 
+  {
+    // Check for a successful response
+    Serial.printf("[HTTP] %s GET... code: %d\n", urlRequest, httpCode);
 
-  if (WiFi.status() == WL_CONNECTED) {
-    int httpCode = http.GET(); // Make the GET request
+    if (httpCode == HTTP_CODE_OK) {
+      // Get the response payload
+      String payload =  http.getString();
 
-    if (httpCode > 0) { // Check for a successful response
-      Serial.printf("[HTTP] GET... code: %d\n", httpCode);
-
-      if (httpCode == HTTP_CODE_OK) {
-        // Get the response payload
-        String payload =  http.getString(); 
-
-        // remove [] of response json string
-        payload = payload.substring(1, payload.length() - 1);
-        
-        // index of '{', indexArray of ServoInfors, nextIndex of '}' + 1
+      // remove [] of response json string
+      payload = payload.substring(1, payload.length() - 1);
+      
+      // index of '{', indexArray of ServoInfors, nextIndex of '}' + 1
+      int startIndex = 0;
+      
+      if (urlRequest == MODE_URL)
+      {
+        String json = getOneJson(payload, &startIndex);
+        MODE = getModeFromJson(json);
+      }
+      else if (urlRequest == CONTROLLING_URL)
+      {
         int indexArray = 0; 
-        int startIndex = 0;
-
         // Print positions for debug
         Serial.print("Pos ");
         while (startIndex < payload.length())
@@ -142,7 +195,7 @@ void loop() {
           String json = getOneJson(payload, &startIndex);
 
           // get and store servo struct from one json
-          ServoInfors[indexArray] = getStructFromJson(json);
+          ServoInfors[indexArray] = getInforFromJson(json);
 
           // Print positions for debug
           int pos = ServoInfors[indexArray].value;
@@ -154,15 +207,40 @@ void loop() {
         // Print positions for debug
         Serial.println(".");
       }
-    } else {
-      Serial.printf("[HTTP] GET request failed, error: %s\n", http.errorToString(httpCode).c_str());
+      else 
+        Serial.printf("[HTTP] %s GET request wrong\n", urlRequest);
     }
-
-    //http.end(); // Close connection
+  }
+  else {
+    Serial.printf("[HTTP] %s GET request failed, error: %s\n", urlRequest, http.errorToString(httpCode).c_str());
   }
 
-  // update last status of servos
-  updateServo();
+  http.end(); // Close connection
+}
+
+void loop() {
+
+  if (WiFi.status() == WL_CONNECTED) {
+    httpRequest(MODE_URL);
+    if (MODE.mode == AUTO)
+    {
+      //runAuto();
+    }
+    else if (MODE.mode == MANUAL)
+    {
+      httpRequest(CONTROLLING_URL);
+      // update last status of servos
+      updateServo();
+    }
+    else
+    {
+      //runAuto();
+    }
+  }
+  else
+  {
+    //runAuto();
+  }
 
   // delay to implement
   delay(3000); // Wait for 3 seconds before making the next request

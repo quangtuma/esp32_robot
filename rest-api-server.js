@@ -19,10 +19,11 @@ async function main() {
   await mongoClient.connect();
   console.log('Connected successfully to MongoDB Server');
   const db = mongoClient.db(dbName);
-  const controllingCollection = db.collection('controlling');
 
-  const findResult = await controllingCollection.find({}).toArray();
-  console.log('Found documents =>', findResult);
+  // CONTROLLING
+  const controllingCollection = db.collection('controlling');
+  const controllinResult = await controllingCollection.find({}).toArray();
+  console.log('Found documents =>', controllinResult);
 
   // GET endpoint to retrieve all controlling
   app.get('/api/controlling', async (req, res) => {
@@ -45,6 +46,18 @@ async function main() {
     const result = await controllingCollection.insertOne(newservo);
     const insertedservo = await controllingCollection.findOne({ _id: result.insertedId });
     res.status(201).json(insertedservo);
+  });
+
+  // MODE
+  const modeCollection = db.collection('mode');
+  const modeResult = await modeCollection.find({}).toArray();
+  console.log('Found documents =>', modeResult);
+
+  // GET endpoint to retrieve mode
+  app.get('/api/mode', async (req, res) => {
+    const mode = await modeCollection.find({}).toArray();
+    if (!mode) console.log('Client request is not successfully!');
+    res.json(mode);
   });
 
   // Start the server
