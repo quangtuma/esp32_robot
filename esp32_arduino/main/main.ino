@@ -2,15 +2,7 @@
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 #include <ESP32Servo.h>
-
-#define SERVO_NUMBER 6
-#define SERVO_LEFT_THIGH 13
-#define SERVO_LEFT_KNEE 12
-#define SERVO_LEFT_ANKLE 14
-#define SERVO_RIGHT_THIGH 27
-#define SERVO_RIGHT_KNEE 26
-#define SERVO_RIGHT_ANKLE 25
-#define SERVO_INITIAL_POS 0
+#include "robot.h"
 
 // Wifi information (SSID, Password)
 const char* ssid = "Phi Long";
@@ -25,14 +17,12 @@ String URL = "http://192.168.1.97:3000/api/";
 HTTPClient http;
 
 // Struct to store MODE
-typedef struct ServoMode
-{
+typedef struct ServoMode {
   const char* id;
   int mode;
 };
 
-enum MODE_ENUM
-{
+enum MODE_ENUM {
   AUTO = 0,
   MANUAL
 };
@@ -40,8 +30,7 @@ enum MODE_ENUM
 ServoMode MODE;
 
 // Struct to store Servo information from MongDB
-typedef struct ServoInfor
-{
+typedef struct ServoInfor {
   const char* id;
   const char* servo;
   const char* description;
@@ -51,11 +40,9 @@ typedef struct ServoInfor
 // Array store Servos information from MongDB
 ServoInfor ServoInfors[SERVO_NUMBER];
 
-// Array store Servos information from Hardware
-Servo ServoObjects[SERVO_NUMBER];
+Robot ROBOT;
 
-ServoMode getModeFromJson(String json)
-{
+ServoMode getModeFromJson(String json) {
   char jsonChar[200];
   json.toCharArray(jsonChar, json.length() + 1);
   StaticJsonDocument<256> doc;
@@ -75,8 +62,7 @@ ServoMode getModeFromJson(String json)
   return mode;
 }
 
-ServoInfor getInforFromJson(String json)
-{
+ServoInfor getInforFromJson(String json) {
   char jsonChar[200];
   json.toCharArray(jsonChar, json.length() + 1);
   StaticJsonDocument<256> doc;
@@ -98,8 +84,7 @@ ServoInfor getInforFromJson(String json)
   return servo;
 }
 
-String getOneJson(String jsons, int* startIndex)
-{
+String getOneJson(String jsons, int* startIndex) {
   // split json string from '{' to '}'
   *startIndex = jsons.indexOf('{', *startIndex);
   int lastIndex = jsons.indexOf('}', *startIndex) + 1;
@@ -110,64 +95,14 @@ String getOneJson(String jsons, int* startIndex)
   return json;
 }
 
-void setupWifi()
-{
-  WiFi.begin(ssid, password);
-
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(1000);
-    Serial.println("Connecting to WiFi...");
-  }
-
-  Serial.println("Connected to WiFi");
-}
-
-void setupServos()
-{
-  // set pin pwm
-  ServoObjects[0].attach(SERVO_LEFT_THIGH);
-  ServoObjects[1].attach(SERVO_LEFT_KNEE);
-  ServoObjects[2].attach(SERVO_LEFT_ANKLE);
-  ServoObjects[3].attach(SERVO_RIGHT_THIGH);
-  ServoObjects[4].attach(SERVO_RIGHT_KNEE);
-  ServoObjects[5].attach(SERVO_RIGHT_ANKLE);
-
-  // set initial pos of servo
-  for (int index = 0; index < SERVO_NUMBER; index++){
-    ServoObjects[index].write(SERVO_INITIAL_POS);
-  }
-}
-
-void updateServo()
-{
-  for (int index = 0; index < SERVO_NUMBER; index++)
-  {
-    int pos = ServoInfors[index].value;
-    if (pos < 0 || pos > 180)
-      Serial.println("Pos is over range from 0 degree to 180 degree!");
-    else 
-      ServoObjects[index].write(pos);
-  }
-}
-
-void setup() {
-
-  Serial.begin(115200);
-
-  setupServos();
-
-  setupWifi();
-}
-
-void httpRequest(String urlRequest)
-{
+void httpRequest(String urlRequest) {
   http.begin(URL + urlRequest); // Specify the URL
   int httpCode = http.GET(); // Make the GET request
   
   if (httpCode > 0) 
   {
     // Check for a successful response
-    Serial.printf("[HTTP] %s GET... code: %d\n", urlRequest, httpCode);
+    //Serial.printf("[HTTP] %s GET... code: %d\n", urlRequest, httpCode);
 
     if (httpCode == HTTP_CODE_OK) {
       // Get the response payload
@@ -188,7 +123,7 @@ void httpRequest(String urlRequest)
       {
         int indexArray = 0; 
         // Print positions for debug
-        Serial.print("Pos ");
+        // Serial.print("Pos ");
         while (startIndex < payload.length())
         {
           // get one json string from payload
@@ -198,14 +133,14 @@ void httpRequest(String urlRequest)
           ServoInfors[indexArray] = getInforFromJson(json);
 
           // Print positions for debug
-          int pos = ServoInfors[indexArray].value;
-          Serial.printf("%d = %d ", indexArray, pos);
+          // int pos = ServoInfors[indexArray].value;
+          // Serial.printf("%d = %d ", indexArray, pos);
           
           // index to next element in ServoInfors
           indexArray++;
         }
         // Print positions for debug
-        Serial.println(".");
+        // Serial.println(".");
       }
       else 
         Serial.printf("[HTTP] %s GET request wrong\n", urlRequest);
@@ -218,28 +153,55 @@ void httpRequest(String urlRequest)
   http.end(); // Close connection
 }
 
+void setupWifi() {
+  WiFi.begin(ssid, password);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    Serial.println("Connecting to WiFi...");
+  }
+
+  Serial.println("Connected to WiFi");
+}
+
+void setup() {
+
+  Serial.begin(115200);
+
+  ROBOT.begin();
+
+  setupWifi();
+}
+
 void loop() {
 
   if (WiFi.status() == WL_CONNECTED) {
     httpRequest(MODE_URL);
-    if (MODE.mode == AUTO)
-    {
-      //runAuto();
-    }
-    else if (MODE.mode == MANUAL)
+    if (MODE.mode == MANUAL)
     {
       httpRequest(CONTROLLING_URL);
+      
+      int updating_pos[SERVO_NUMBER];
+
+      for (int index = 0; index < SERVO_NUMBER; index++)
+      {
+        updating_pos[index] = ServoInfors[index].value;
+      }
+
       // update last status of servos
-      updateServo();
+      Serial.printf("ROBOT is in Manual Mode.\n");
+      ROBOT.runManualServos(updating_pos);
     }
     else
     {
-      //runAuto();
+      Serial.printf("ROBOT is in Automactic Mode.\n");
+      ROBOT.runAutoServos();
     }
   }
   else
   {
-    //runAuto();
+    Serial.printf("ROBOT is in Automactic Mode.\n");
+    ROBOT.runAutoServos();
   }
 
   // delay to implement

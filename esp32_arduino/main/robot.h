@@ -4,7 +4,7 @@
 #include <Arduino.h>
 #include <ESP32Servo.h>
 
-#define DEBUG
+//#define DEBUG
 
 #define SERIAL 115200
 #define SERVO_NUMBER 6
