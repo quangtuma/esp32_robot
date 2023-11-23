@@ -4,7 +4,7 @@
 #include <Arduino.h>
 #include <ESP32Servo.h>
 
-//#define DEBUG
+#define DEBUG_OFF
 
 #define SERIAL 115200
 #define SERVO_NUMBER 6
@@ -37,6 +37,7 @@ class Robot
     void runManualServos(int *servoPos);
   private:
     void calculatePostion(int pos, int index);
+    void runServo(int pos, int index);
     Servo Servos[SERVO_NUMBER];
     int ServosPins[SERVO_NUMBER] = 
     {
@@ -55,7 +56,10 @@ class Robot
       { 77, 167 }, { 0, 110 }, { 85, 165 }
     };
 
-    int ServosCurrentPos[SERVO_NUMBER];
+    int ServosCurrentPos[SERVO_NUMBER] = {
+      SERVO_LEFT_THIGH_ROOT_POS, SERVO_LEFT_KNEE_ROOT_POS, SERVO_LEFT_ANKLE_ROOT_POS, 
+      SERVO_RIGHT_THIGH_ROOT_POS, SERVO_RIGHT_KNEE_ROOT_POS, SERVO_RIGHT_ANKLE_ROOT_POS 
+    }; // left: 50+ 17+ -111+; right: 167- 109- -125+
 };
 
 #endif

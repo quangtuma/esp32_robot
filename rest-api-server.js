@@ -17,13 +17,13 @@ const dbName = 'esp32';
 async function main() {
   // Use connect method to connect to the server
   await mongoClient.connect();
-  console.log('Connected successfully to MongoDB Server');
+  console.log('Connected successfully to MongoDB Server\n');
   const db = mongoClient.db(dbName);
 
   // CONTROLLING
   const controllingCollection = db.collection('controlling');
   const controllinResult = await controllingCollection.find({}).toArray();
-  console.log('Found documents =>', controllinResult);
+  console.log('Found controlling =>', controllinResult, '\n');
 
   // GET endpoint to retrieve all controlling
   app.get('/api/controlling', async (req, res) => {
@@ -51,7 +51,7 @@ async function main() {
   // MODE
   const modeCollection = db.collection('mode');
   const modeResult = await modeCollection.find({}).toArray();
-  console.log('Found documents =>', modeResult);
+  console.log('Found mode =>', modeResult);
 
   // GET endpoint to retrieve mode
   app.get('/api/mode', async (req, res) => {
@@ -65,7 +65,7 @@ async function main() {
     console.log(`Server listening at http://localhost:${port}`);
   });
 
-  return "done.";
+  return '\n';
 }
 
 main()

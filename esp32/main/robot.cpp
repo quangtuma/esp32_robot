@@ -1,14 +1,15 @@
+#include "esp32-hal.h"
 #include "robot.h"
 
 Robot::Robot()
 {
-#ifdef DEBUG
+#ifdef DEBUG_ON
   Serial.begin(SERIAL);
 #endif
 }
 Robot::Robot(int *servosPin, int *servosRootPos)
 {
-#ifdef DEBUG
+#ifdef DEBUG_ON
   Serial.begin(SERIAL);
 #endif
   for (int index = 0; index < SERVO_NUMBER; index++)
@@ -25,11 +26,11 @@ void Robot::begin()
   {
     Servos[index].attach(ServosPins[index]);
     Servos[index].write(ServosRootPos[index]);
-#ifdef DEBUG
+#ifdef DEBUG_ON
     Serial.printf("Servos %d: ,pin: %d, pos: %d\n", index, ServosPins[index], ServosRootPos[index]);
 #endif
   }
-#ifdef DEBUG
+#ifdef DEBUG_ON
   Serial.println("Robot began.");
 #endif
 }
@@ -44,7 +45,7 @@ void Robot::runAutoServos()
     }
   }
 
-  delay(1500);
+  delay(1000);
 
   //Serial.println("DECREASE");
   for (int pos = 29; pos >= 0; pos--)
@@ -54,6 +55,8 @@ void Robot::runAutoServos()
       calculatePostion(pos, index);
     }
   }
+  
+  delay(1000);
 }
 
 void Robot::runManualServos(int *servoPos)
@@ -67,11 +70,30 @@ void Robot::runManualServos(int *servoPos)
     else if (pos > ServosRootPosLimit[index][1])
       pos = ServosRootPosLimit[index][1];
 
-    Servos[index].write(pos);
-#ifdef DEBUG
+    //Servos[index].write(pos);
+    runServo(pos, index);
+#ifdef DEBUG_ON
     Serial.printf("Servos %d: ,pin: %d, pos: %d\n", index, ServosPins[index], pos);
 #endif
   }
+}
+
+void Robot::runServo(int pos, int index)
+{
+  if (ServosCurrentPos[index] > pos)
+    while (ServosCurrentPos[index] > pos)
+    {
+      ServosCurrentPos[index]--;
+      Servos[index].write(ServosCurrentPos[index]);
+      delay(10);
+    }
+  else if (ServosCurrentPos[index] < pos)
+    while (ServosCurrentPos[index] < pos)
+    {
+      ServosCurrentPos[index]++;
+      Servos[index].write(ServosCurrentPos[index]);
+      delay(10);
+    }
 }
 
 void Robot::calculatePostion(int pos, int index)
@@ -100,7 +122,7 @@ void Robot::calculatePostion(int pos, int index)
   Servos[5].write(pos5);
   ServosCurrentPos[5] = pos5;
 
-#ifdef DEBUG
+#ifdef DEBUG_ON
     Serial.printf("Pos: 0: %d, Pos: 1: %d, Pos: 2: %d, Pos: 3: %d, Pos: 4: %d, Pos: 5: %d\n", pos0, pos1, pos2, pos3, pos4, pos5);
 #endif
 

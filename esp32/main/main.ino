@@ -205,5 +205,5 @@ void loop() {
   }
 
   // delay to implement
-  delay(3000); // Wait for 3 seconds before making the next request
+  delay(100); // Wait for 1 second before making the next request
 }

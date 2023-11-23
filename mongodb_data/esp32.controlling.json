@@ -3,7 +3,7 @@
     "$oid": "654ef9eedad8b93a35f79b87"
   },
   "servo": "left thigh",
-  "description": "left thigh servo",
+  "description": "left thigh servo in range from 50 to 140 degrees",
   "value": 32
 },
 {
@@ -11,7 +11,7 @@
     "$oid": "6552db7b6401618c896cc9f5"
   },
   "servo": "left knee",
-  "description": "left knee servo",
+  "description": "left knee servo in range from 17 to 127 degrees",
   "value": 31
 },
 {
@@ -19,7 +19,7 @@
     "$oid": "6552db816401618c896cc9f6"
   },
   "servo": "left ankle",
-  "description": "left ankle servo",
+  "description": "left ankle servo in range from 71 to 151 degrees",
   "value": 30
 },
 {
@@ -27,7 +27,7 @@
     "$oid": "6552e2276401618c896cc9f7"
   },
   "servo": "right thigh",
-  "description": "right thigh servo",
+  "description": "right thigh servo in range from 77 to 167 degrees",
   "value": 29
 },
 {
@@ -35,7 +35,7 @@
     "$oid": "6552e22e6401618c896cc9f8"
   },
   "servo": "right knee",
-  "description": "right knee servo",
+  "description": "right knee servo in range from 0 to 110 degrees",
   "value": 28
 },
 {
@@ -43,6 +43,6 @@
     "$oid": "6552e2366401618c896cc9f9"
   },
   "servo": "right ankle",
-  "description": "right ankle servo",
+  "description": "right ankle servo in range from 85 to 165 degrees",
   "value": 27
 }]
